@@ -16,6 +16,7 @@ export const useDataStore = defineStore("data", {
       this.editableData[key] = cloneDeep(
         this.dataSource.find((item) => key === item.key)
       );
+      console.log(key);
     },
     // 保存数据
     save(key) {
@@ -42,6 +43,7 @@ export const useDataStore = defineStore("data", {
         this.columns.forEach((column) => {
           if (column.title != "操作") newData[column.title] = "N/A";
         });
+        newData.status = 'test';
         newData.key = this.count;
         this.dataSource.push(newData);
         console.log(this.dataSource);
@@ -85,23 +87,31 @@ export const useDataStore = defineStore("data", {
           dataIndex: header,
           key: header,
           editable: true,
-          width: `${100 / (width + 1)}%`,
+          width: `${100 / (width + 2)}%`,
         }));
+        this.columns.push({
+          title: 'status',
+          dataIndex: 'status',
+          editable: false,
+          width: `${100 / (width + 2)}%`,
+        })
         this.columns.push({
           title: "操作",
           dataIndex: "operation",
           editable: false,
-          width: `${100 / (width + 1)}%`,
+          width: `${100 / (width + 2)}%`,
         });
         this.dataSource = data.slice(1).map((row, index) => {
           const rowData = {};
           data[0].forEach((header, i) => {
             rowData[header] = row[i];
           });
+          rowData.status = 'failure' // 状态初始化为待测试
           rowData.key = index;
           return rowData;
         });
         this.count = this.dataSource.length;
+        console.log(this.dataSource);
       }
     },
     // 恢复初始值
