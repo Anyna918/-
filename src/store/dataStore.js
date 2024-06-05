@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { cloneDeep } from "lodash-es";
 import Papa from "papaparse";
 import { ElNotification } from "element-plus";
+import axios from "axios";
 
 export const useDataStore = defineStore("data", {
   state: () => ({
@@ -67,6 +68,23 @@ export const useDataStore = defineStore("data", {
       reader.readAsText(file);
       return false; // 阻止自动上传逻辑
     },
+    // 从public文件夹中读取CSV文件
+    async fetchCsvFromPublic(filename) {
+      try {
+        const response = await axios.get(`/${filename}`);
+        this.parseCsv(response.data);
+        ElNotification({
+          title: "读取成功",
+          message: "数据已成功导入测试用例列表",
+        });
+      } catch (error) {
+        console.error("Error fetching CSV file:", error);
+        ElNotification({
+          title: "读取失败",
+          message: "无法从public文件夹中读取CSV文件",
+        });
+      }
+    },
     // 解析csv
     parseCsv(csvData) {
       Papa.parse(csvData, {
@@ -87,26 +105,26 @@ export const useDataStore = defineStore("data", {
           dataIndex: header,
           key: header,
           editable: true,
-          width: `${100 / (width + 2)}%`,
+          width: 120,
         }));
         this.columns.push({
           title: 'status',
           dataIndex: 'status',
           editable: false,
-          width: `${100 / (width + 2)}%`,
+          width: 120,
         })
         this.columns.push({
           title: "操作",
           dataIndex: "operation",
           editable: false,
-          width: `${100 / (width + 2)}%`,
+          width: 120,
         });
         this.dataSource = data.slice(1).map((row, index) => {
           const rowData = {};
           data[0].forEach((header, i) => {
             rowData[header] = row[i];
           });
-          rowData.status = 'failure' // 状态初始化为待测试
+          rowData.status = 'test' // 状态初始化为待测试
           rowData.key = index;
           return rowData;
         });

@@ -14,11 +14,20 @@
         {{ result }}{{ content[type].unit }}
       </div>
     </div>
-    <div class="line" :style="{ backgroundColor: content[type].color }"></div>
+    <el-progress
+      :percentage="100"
+      :stroke-width="5"
+      :show-text="false"
+      striped
+      striped-flow
+      :duration="10"
+      class="line"
+      :status="currentStatus"
+    />
   </div>
 </template>
 
-<style>
+<style scoped>
 .container {
   width: 300px;
   height: 150px;
@@ -66,13 +75,14 @@
 </style>
 
 <script>
+import { computed } from 'vue';
 export default {
   name: "TestCard",
   props: {
     type: Number,
     result: Number
   },
-  setup() {
+  setup(props) {
     const content = [
       {
         title: "测试用例数量",
@@ -96,7 +106,13 @@ export default {
         unit:" ms"
       },
     ];
-    return { content };
+    const currentStatus = computed(() => {
+      if(props.type == 1)
+        return 'success';
+      else if (props.type == 2)
+        return 'warning';
+    });
+    return { content , currentStatus };
   },
 };
 </script>

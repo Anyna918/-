@@ -13,8 +13,46 @@
     :data-source="dataStore.dataSource"
     bordered
     class="table"
-    :scroll="{ y: 300 }"
+    :scroll="{ y: 400 }"
+    :expand-column-width="100"
   >
+    <template
+      v-slot:customFilterDropdown="{
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+        column,
+      }"
+    >
+      <div style="padding: 8px">
+        <a-input
+          ref="searchInput"
+          v-model="selectedKeys[0]"
+          @input="
+            setSelectedKeys($event.target.value ? [$event.target.value] : [])
+          "
+          @keyup.enter="handleSearch(selectedKeys, confirm, column.dataIndex)"
+          style="width: 188px; margin-bottom: 8px; display: block"
+        />
+        <a-button
+          type="primary"
+          size="small"
+          @click="handleSearch(selectedKeys, confirm, column.dataIndex)"
+          style="width: 90px; margin-right: 8px"
+        >
+          <template #icon><SearchOutlined /></template>
+          Search
+        </a-button>
+        <a-button
+          size="small"
+          @click="handleReset(clearFilters)"
+          style="width: 90px"
+        >
+          Reset
+        </a-button>
+      </div>
+    </template>
     <template #bodyCell="{ column, text, record }">
       <template v-if="column.editable">
         <div>
@@ -30,8 +68,12 @@
       </template>
       <template v-else-if="column.dataIndex === 'status'">
         <span v-if="getStatus(record) === 'test'" class="test">待测试</span>
-        <span v-else-if="getStatus(record) === 'pass'" class="pass">已通过</span>
-        <span v-else-if="getStatus(record) === 'failure'" class="failure">未通过</span>
+        <span v-else-if="getStatus(record) === 'pass'" class="pass"
+          >已通过</span
+        >
+        <span v-else-if="getStatus(record) === 'failure'" class="failure"
+          >未通过</span
+        >
       </template>
 
       <template v-else-if="column.dataIndex === 'operation'">
@@ -59,6 +101,14 @@
           </a-popconfirm>
         </div>
       </template>
+    </template>
+    <template #expandedRowRender="{ record }">
+      <p style="margin: 0">
+        {{ record.description }}
+      </p>
+    </template>
+    <template #expandColumnTitle>
+      <span>More</span>
     </template>
   </a-table>
 </template>
@@ -111,19 +161,76 @@
 </style>
 
 <script>
+import { ref, reactive } from "vue";
 import { useDataStore } from "@/store/dataStore.js";
+
 export default {
   name: "DataTable",
+  
   setup() {
     const dataStore = useDataStore();
     const getStatus = (record) => {
-      const item = dataStore.dataSource.find(item => item.key === record.key);
-      console.log(`Rendering status for key: ${record.key}, status: ${item ? item.status : 'undefined'}`);
-      return item && item.status;  // 确保 item 存在后再访问 status
+      const item = dataStore.dataSource.find((item) => item.key === record.key);
+      return item && item.status; // 确保 item 存在后再访问 status
     };
+
+    // 搜索
+    const searchInput = ref(null);
+    const state = reactive({
+      searchText: "",
+      searchedColumn: "",
+    });
+
+    const handleSearch = (selectedKeys, confirm, dataIndex) => {
+      confirm();
+      state.searchText = selectedKeys[0];
+      state.searchedColumn = dataIndex;
+    };
+
+    const handleReset = (clearFilters) => {
+      clearFilters({
+        confirm: true,
+      });
+      state.searchText = "";
+    };
+
+    // 更新columns配置，添加搜索功能
+    dataStore.columns = dataStore.columns.map((column) => ({
+      ...column,
+      customFilterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => ({
+        template: "#customFilterDropdown",
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+        column,
+      }),
+      onFilter: (value, record) =>
+        record[column.dataIndex]
+          .toString()
+          .toLowerCase()
+          .includes(value.toLowerCase()),
+      onFilterDropdownOpenChange: (visible) => {
+        if (visible && searchInput.value) {
+          setTimeout(() => {
+            searchInput.value.focus();
+          }, 100);
+        }
+      },
+    }));
+
     return {
       dataStore,
       getStatus,
+      searchInput,
+      handleSearch,
+      handleReset,
+      state,
     };
   },
 };

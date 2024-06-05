@@ -7,8 +7,7 @@
         class="el-menu-vertical-demo"
         default-active="2"
         text-color="#fff"
-        @open="handleOpen"
-        @close="handleClose"
+        @select="handleJumpTo"
       >
         <el-menu-item index="1">
           <img src="@/assets/my_logo.png" alt="Menu Icon" class="logo" />
@@ -67,10 +66,13 @@
           active-text-color="#ffd04b"
           @select="handleSelect"
         >
-          <el-menu-item index="1">仪表盘</el-menu-item>
-          <el-menu-item index="2">测试用例</el-menu-item>
+          <el-menu-item index="1">问题描述</el-menu-item>
+          <el-menu-item index="2">仪表盘</el-menu-item>
+          <el-menu-item index="3">测试用例</el-menu-item>
         </el-menu>
-        <DashBoard v-if="activeIndex === '1'"  :result="result"/>
+
+        <Description v-if="activeIndex === '1'" :titleKey="selectedKeys[0]-1"/>
+        <DashBoard v-else-if="activeIndex === '2'"/>
         <DataTable v-else />
       </div>
     </el-col>
@@ -170,19 +172,23 @@
 
 <script>
 import { ref } from "vue";
+import { useRouter } from 'vue-router';
 import DashBoard from "../components/dashBoard.vue";
 import DataTable from "../components/dataTable.vue";
+import Description from "../components/description.vue";
 
 export default {
   name: "HomeView",
   components: {
     DashBoard,
     DataTable,
+    Description,
   },
   setup() {
-    const activeIndex = ref('1');
-    const expandedKeys = ref(["1-1"]);
-    const selectedKeys = ref([]);
+    const activeIndex = ref("1");
+    const expandedKeys = ref(["1"]);
+    const selectedKeys = ref([1]);
+    console.log("Selected keys:", selectedKeys.value);
     const treeData = [
       {
         title: "题目",
@@ -191,50 +197,39 @@ export default {
           {
             title: "判断三角形",
             key: "1",
-            children: [
-              {
-                title: "两边之和",
-                key: "1-1",
-              },
-              {
-                title: "两边之差",
-                key: "1-2",
-              },
-              {
-                title: "等腰三角形",
-                key: "1-3",
-              },
-            ],
           },
           {
             title: "万年历",
             key: "2",
-            children: [
-              {
-                title: "判断是否为闰年",
-                key: "2-1",
-              },
-            ],
           },
           {
             title: "电脑销售系统",
             key: "3",
-            children: [
-              {
-                title: "计算总价",
-                key: "3-1",
-              },
-            ],
           },
+          {
+            title:"电信收费系统",
+            key:"4"
+          }
         ],
       },
     ];
-    // 仪表盘数据
-    const result = ref([30, 24, 1800]);
-    const handleSelect = (index, indexPath) =>{
+    const handleSelect = (index, indexPath) => {
       activeIndex.value = index;
-    }
-    return { treeData, result, activeIndex, handleSelect };
+    };
+
+    const router = useRouter()
+    const handleJumpTo = (index) => {
+      switch (index) {
+        case '2':
+          router.push({ name: 'home' });
+          break;
+        case '3':
+          router.push({ name: 'unit' });
+          break;
+      }
+    };
+
+    return { treeData, activeIndex, handleSelect, selectedKeys, handleJumpTo };
   },
 };
 </script>

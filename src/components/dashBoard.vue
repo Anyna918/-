@@ -1,40 +1,39 @@
 <template>
-  <a-button type="primary" >开始测试</a-button>
   <div class="card">
-    <TestCard :type="0" :result="result[0]" />
-    <TestCard :type="1" :result="result[1]" />
-    <TestCard :type="2" :result="result[2]" />
+    <TestCard :type="0" :result="results[0]" />
+    <TestCard :type="1" :result="results[1]" />
+    <TestCard :type="2" :result="results[2]" />
   </div>
   <div ref="gaugeChartRef" class="chart"></div>
-  <div>✅ Accuracy</div>
-  
+  <div style="margin-bottom: 10px">✅ Accuracy</div>
+  <a-button type="primary" @click="beginTest">开始测试</a-button>
 </template>
 
 <style>
 .card {
   display: flex;
-  margin-top: 30px;
+  margin-top: 20px;
   margin-left: 20px;
   margin-right: 20px;
   justify-content: space-between;
 }
-.chart{
-    width:350px;    
-    height: 350px;
-    border-radius: 10px;
-    margin: auto;
+.chart {
+  width: 350px;
+  height: 350px;
+  border-radius: 10px;
+  margin: auto;
 }
-
 </style>
 
 <script>
 import TestCard from "../components/testCard.vue";
 
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from "vue";
 import * as echarts from "echarts/core";
 import { GaugeChart } from "echarts/charts";
 import { TitleComponent, TooltipComponent } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
+import { triangleTest } from "@/utils/triangle.js";
 
 echarts.use([GaugeChart, TitleComponent, TooltipComponent, CanvasRenderer]);
 
@@ -43,47 +42,79 @@ export default {
   components: {
     TestCard,
   },
-  props: {
-    result: Array,
-  },
-  setup(props) {
+  setup() {
     const gaugeChartRef = ref(null);
+    const results = ref([0, 0, 0]); // 初始化为 0
+
+    let myChart = null;
 
     onMounted(() => {
-      const myChart = echarts.init(gaugeChartRef.value);
-      const total = props.result[0];
-      const correct = props.result[1];
-      const correctRate = (total > 0 ? (correct / total) * 100 : 0).toFixed(2);
-
-      let option = {
-        tooltip: {
-          formatter: "{a} <br/>{b} : {c}%"
-        },
+      // 在组件加载完毕时初始化图表
+      myChart = echarts.init(gaugeChartRef.value);
+      // 设置图表的初始配置
+      myChart.setOption({
+        tooltip: { formatter: "{a} <br/>{b} : {c}%" },
         series: [
           {
-            name: '正确率',
-            type: 'gauge',
-            detail: { valueAnimation: true,formatter: '{value}%',color:'inherit' },
-            data: [{ value: correctRate}],
-            axisLine: {            // 坐标轴线
-                lineStyle: {         // 属性lineStyle控制线条样式
-                color: [[0.2, '#f6416c'], [0.8, '#ffd460'], [1, '#78D700']],
-                width: 10
-                }
+            name: "正确率",
+            type: "gauge",
+            detail: {
+              valueAnimation: true,
+              formatter: "{value}%",
+              color: "inherit",
             },
-            itemStyle: {
-                color: '#4B69FF'    // 指针颜色
-            }
-          }
-        ]
-      };
-
-      myChart.setOption(option);
+            data: [{ value: 0 }], // 初始值设置为 0
+            axisLine: {
+              lineStyle: {
+                color: [
+                  [0.2, "#f6416c"],
+                  [0.8, "#ffd460"],
+                  [1, "#78D700"],
+                ],
+                width: 10,
+              },
+            },
+            itemStyle: { color: "#4B69FF" },
+          },
+        ],
+      });
     });
+    
+
+    // 监听 results 的变化并更新图表
+    watch(
+      results,
+      (newResults) => {
+        const total = newResults[0];
+        const correct = newResults[1];
+        const correctRate = (total > 0 ? (correct / total) * 100 : 0).toFixed(
+          2
+        );
+
+        if (myChart) {
+          myChart.setOption({
+            series: [
+              {
+                data: [{ value: correctRate }],
+              },
+            ],
+          });
+        }
+      },
+      { immediate: true }
+    );
+
+    const beginTest = () => {
+      // 模拟一个测试结果
+      const testResult = triangleTest();
+      results.value = [testResult.total, testResult.count, testResult.duration];
+    };
 
     return {
       gaugeChartRef,
+      beginTest,
+      results,
     };
-  }
+  },
 };
 </script>
