@@ -111,6 +111,11 @@
       <span>More</span>
     </template>
   </a-table>
+  <div class="delete">
+    <a-button type="primary" style="margin-left: 30px;margin-top:10px;" @click="resetTable"
+      >重置表格</a-button
+    >
+  </div>
 </template>
 
 <style scoped>
@@ -158,20 +163,51 @@
   padding: 5px;
   border-radius: 5px;
 }
+.delete {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+}
 </style>
 
 <script>
 import { ref, reactive } from "vue";
 import { useDataStore } from "@/store/dataStore.js";
+import { ElMessage, ElMessageBox } from "element-plus";
 
 export default {
   name: "DataTable",
-  
+
   setup() {
     const dataStore = useDataStore();
     const getStatus = (record) => {
       const item = dataStore.dataSource.find((item) => item.key === record.key);
       return item && item.status; // 确保 item 存在后再访问 status
+    };
+
+    const resetTable = () => {
+      ElMessageBox.confirm(
+        "确认重置测试用例？",
+        "提醒",
+        {
+          confirmButtonText: "确认",
+          cancelButtonText: "取消",
+          type: "warning",
+        }
+      )
+        .then(() => {
+          ElMessage({
+            type: "success",
+            message: "重置成功",
+          });
+          dataStore.reset();
+        })
+        .catch(() => {
+          ElMessage({
+            type: "info",
+            message: "重置取消",
+          });
+        });
     };
 
     // 搜索
@@ -185,6 +221,7 @@ export default {
       confirm();
       state.searchText = selectedKeys[0];
       state.searchedColumn = dataIndex;
+      console.log(state.searchText);
     };
 
     const handleReset = (clearFilters) => {
@@ -231,6 +268,7 @@ export default {
       handleSearch,
       handleReset,
       state,
+      resetTable,
     };
   },
 };
