@@ -38,7 +38,7 @@
       <div class="col_2">
         <div class="project">
           <el-dropdown @command="handleProjectSelect">
-            <el-button type="primary" style="width: 200px">
+            <el-button type="primary" style="width: 150px">
               项目列表
             </el-button>
             <template #dropdown>
@@ -90,6 +90,12 @@
             circle
             @Click="addProjectClass"
           />
+          <el-button
+            type="success"
+            :icon="Cpu"
+            circle
+            @Click="addClassFunction"
+          />
         </div>
         <div class="backendClass">
           <a-tree
@@ -136,7 +142,7 @@
           :stackUrl="data.projects[selectedProject].stackUrl"
         />
         <DashBoard v-else-if="activeIndex === '2'" :testType="2" />
-        <DataTable v-else />
+        <DataTable v-else :functionName="functionName" />
       </div>
     </el-col>
   </el-row>
@@ -157,17 +163,16 @@
   display: flex;
   flex-direction: row;
 }
-
 </style>
 
 <script>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import DashBoard from "../components/dashBoard.vue";
 import DataTable from "../components/dataTable.vue";
 import ProjectDesc from "../components/projectDesc.vue";
 import { useProjectStore } from "@/store/projectStore.js";
-import { Edit, Connection} from "@element-plus/icons-vue";
+import { Edit, Connection, Cpu } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 
 export default {
@@ -181,6 +186,7 @@ export default {
     const activeIndex = ref("1");
     const expandedKeys = ref(["1"]);
     const selectedKeys = ref([1]);
+    const functionName = ref("");
 
     const handleSelect = (index, indexPath) => {
       activeIndex.value = index;
@@ -192,20 +198,28 @@ export default {
     const handleProjectSelect = (projectId) => {
       // 确保 projectId 是数字类型
       const numericId = Number(projectId);
-      selectedProject.value = data.projects.find((p) => p.id === numericId).id - 1;
+      selectedProject.value =
+        data.projects.find((p) => p.id === numericId).id - 1;
     };
+
+    // 监听 selectedKeys 的变化
+    watch(selectedKeys, (newValue, oldValue) => {
+      console.log("selectedKeys 发生变化: ", newValue, oldValue);
+      functionName.value = data.findFunctionName(parseInt(selectedProject.value) + 1, selectedKeys.value[0]);
+      console.log('函数名称', functionName.value);
+    });
 
     const router = useRouter();
     const handleJumpTo = (index) => {
       switch (index) {
-        case '2':
-          router.push({ name: 'home' });
+        case "2":
+          router.push({ name: "home" });
           break;
-        case '3':
-          router.push({ name: 'unit' });
+        case "3":
+          router.push({ name: "unit" });
           break;
-        case '4':
-          router.push({ name: 'inte' });
+        case "4":
+          router.push({ name: "inte" });
           break;
       }
     };
@@ -215,7 +229,7 @@ export default {
       name: "",
       desc: "",
       url: "",
-      stackUrl:""
+      stackUrl: "",
     });
 
     const openFormDialog = () => {
@@ -240,11 +254,16 @@ export default {
     });
     const isTreeVisible = computed(() => {
       const backendClasses = selectedBackendClasses.value;
-      return backendClasses && backendClasses.length > 0 && backendClasses[0].children.length > 0;
+      return (
+        backendClasses &&
+        backendClasses.length > 0 &&
+        backendClasses[0].children.length > 0
+      );
     });
-    
+
     // 添加类
     const addProjectClass = () => {
+      console.log(selectedKeys.value);
       ElMessageBox.prompt("请输入类名称", "添加", {
         confirmButtonText: "确认",
         cancelButtonText: "取消",
@@ -256,7 +275,42 @@ export default {
         },
       })
         .then(({ value }) => {
-          data.addBackendClassToProject(parseInt(selectedProject.value)+1, value);
+          data.addBackendClassToProject(
+            parseInt(selectedProject.value) + 1,
+            value
+          );
+          // data.addFunctionToClass(parseInt(selectedProject.value)+1, parseInt(selectedKeys.value), value)
+          ElMessage({
+            type: "success",
+            message: `添加成功`,
+          });
+        })
+        .catch(() => {
+          ElMessage({
+            type: "info",
+            message: "取消添加",
+          });
+        });
+    };
+
+    // 添加函数
+    const addClassFunction = () => {
+      ElMessageBox.prompt("请输入函数名称", "添加", {
+        confirmButtonText: "确认",
+        cancelButtonText: "取消",
+        inputValidator: (value) => {
+          if (!value) {
+            return "请输入有效名称"; // 提示输入不能为空
+          }
+          return true; // 输入非空则通过
+        },
+      })
+        .then(({ value }) => {
+          data.addFunctionToClass(
+            parseInt(selectedProject.value) + 1,
+            parseInt(selectedKeys.value),
+            value
+          );
           ElMessage({
             type: "success",
             message: `添加成功`,
@@ -279,13 +333,16 @@ export default {
       handleProjectSelect,
       data,
       Edit,
+      Cpu,
       addProjectClass,
+      addClassFunction,
       isDialogVisible,
       formData,
       openFormDialog,
       submitFormData,
       Connection,
-      isTreeVisible
+      isTreeVisible,
+      functionName
     };
   },
 };

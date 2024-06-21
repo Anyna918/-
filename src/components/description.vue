@@ -345,6 +345,19 @@ const inputTestData = () =>{
         break;
     }
   }
+  else{
+    switch(selectedValue.value[0]){
+      case 'edge':
+        dataStore.fetchCsvFromPublic('charge_1.csv');
+        break;
+      case 'equal':
+        dataStore.fetchCsvFromPublic('charge_2.csv');
+        break;
+      case 'decision':
+      dataStore.fetchCsvFromPublic('charge_3.csv');
+      break;
+    };
+  }
 }
 
 onMounted(() => {

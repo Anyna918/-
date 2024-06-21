@@ -6,10 +6,16 @@
   </div>
   <div ref="gaugeChartRef" class="chart"></div>
   <div style="margin-bottom: 10px">✅ Accuracy</div>
-  <a-button type="primary" @click="beginTest">
-    <p v-if="testType==1">开始测试</p>
-    <p v-else-if="testType==2">统计结果</p>
+  <a-button type="primary" @click="beginTest" v-if="testType == 1">
+    <p>开始测试</p>
   </a-button>
+  <a-upload
+    v-if="testType === 2"
+    :before-upload="handleBeforeUpload"
+    :showUploadList="false"
+  >
+    <a-button type="primary">统计结果</a-button>
+  </a-upload>
 </template>
 
 <style>
@@ -37,8 +43,10 @@ import { GaugeChart } from "echarts/charts";
 import { TitleComponent, TooltipComponent } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import { triangleTest } from "@/utils/triangle.js";
-import { calendarTest } from "@/utils/calendar.js"
-import { computerTest } from "@/utils/computer.js"
+import { calendarTest } from "@/utils/calendar.js";
+import { computerTest } from "@/utils/computer.js";
+import { chargeTest } from "@/utils/charge.js";
+import { useDataStore } from "@/store/dataStore.js";
 
 echarts.use([GaugeChart, TitleComponent, TooltipComponent, CanvasRenderer]);
 
@@ -49,7 +57,7 @@ export default {
   },
   props: {
     testType: Number, // 测试类型
-    titleKey: Number // 题目索引
+    titleKey: Number, // 题目索引
   },
   setup(props) {
     const gaugeChartRef = ref(null);
@@ -88,7 +96,6 @@ export default {
         ],
       });
     });
-    
 
     // 监听 results 的变化并更新图表
     watch(
@@ -113,19 +120,57 @@ export default {
       { immediate: true }
     );
 
+    const dataStore = useDataStore();
     const beginTest = () => {
-      // 判断三角形
-      if (props.titleKey == 0){
+      if (props.titleKey == 0) {
+        // 判断三角形
         const testResult = triangleTest();
-        results.value = [testResult.total, testResult.count, testResult.duration];
-      }
-      else if (props.titleKey == 1){
+        results.value = [
+          testResult.total,
+          testResult.count,
+          testResult.duration,
+        ];
+      } else if (props.titleKey == 1) {
+        // 万年历问题
         const testResult = calendarTest();
-        results.value = [testResult.total, testResult.count, testResult.duration];
-      }
-      else if (props.titleKey == 2){
+        results.value = [
+          testResult.total,
+          testResult.count,
+          testResult.duration,
+        ];
+      } else if (props.titleKey == 2) {
+        // 电脑销售系统问题
         const testResult = computerTest();
-        results.value = [testResult.total, testResult.count, testResult.duration];
+        results.value = [
+          testResult.total,
+          testResult.count,
+          testResult.duration,
+        ];
+      } else {
+        // 电信收费问题
+        const testResult = chargeTest();
+        results.value = [
+          testResult.total,
+          testResult.count,
+          testResult.duration,
+        ];
+      }
+    };
+
+    const handleBeforeUpload = async (file) => {
+      try {
+        const testResult = await dataStore.uploadResults(file);
+        console.log("testResult", testResult);
+        // 如果需要在这里处理更多逻辑，可以添加相应代码
+        results.value = [
+          testResult.total,
+          testResult.count,
+          testResult.duration,
+        ];
+        return false; // 阻止默认的文件上传行为
+      } catch (error) {
+        console.error("Error uploading results:", error);
+        return false; // 阻止默认的文件上传行为
       }
     };
 
@@ -133,6 +178,8 @@ export default {
       gaugeChartRef,
       beginTest,
       results,
+      dataStore,
+      handleBeforeUpload,
     };
   },
 };

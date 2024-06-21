@@ -177,7 +177,9 @@ import { ElMessage, ElMessageBox } from "element-plus";
 
 export default {
   name: "DataTable",
-
+  props:{
+    functionName: String
+  },
   setup() {
     const dataStore = useDataStore();
     const getStatus = (record) => {
