@@ -128,13 +128,7 @@
           <el-menu-item index="3">测试用例</el-menu-item>
         </el-menu>
 
-        <ProjectDesc
-          v-if="activeIndex === '1'"
-          :projectName="data.projects[selectedProject].name"
-          :projectDesc="data.projects[selectedProject].desc"
-          :projectUrl="data.projects[selectedProject].url"
-          :stackUrl="data.projects[selectedProject].stackUrl"
-        />
+        <Apifox v-if="activeIndex === '1'"/>
         <DashBoard v-else-if="activeIndex === '2'" :testType="2" />
         <DataTable v-else />
       </div>
@@ -157,7 +151,6 @@
   display: flex;
   flex-direction: row;
 }
-
 </style>
 
 <script>
@@ -166,16 +159,18 @@ import { useRouter } from "vue-router";
 import DashBoard from "../components/dashBoard.vue";
 import DataTable from "../components/dataTable.vue";
 import ProjectDesc from "../components/projectDesc.vue";
+import Apifox from "../components/apifox.vue"
 import { useProjectStore } from "@/store/projectStore.js";
-import { Edit, Connection} from "@element-plus/icons-vue";
+import { Edit, Connection } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 
 export default {
-  name: "UnitView",
+  name: "IntegrationView",
   components: {
     DashBoard,
     DataTable,
     ProjectDesc,
+    Apifox
   },
   setup() {
     const activeIndex = ref("1");
@@ -192,21 +187,22 @@ export default {
     const handleProjectSelect = (projectId) => {
       // 确保 projectId 是数字类型
       const numericId = Number(projectId);
-      selectedProject.value = data.projects.find((p) => p.id === numericId).id - 1;
+      selectedProject.value =
+        data.projects.find((p) => p.id === numericId).id - 1;
     };
 
     const router = useRouter();
     const handleJumpTo = (index) => {
       switch (index) {
-        case '2':
-          router.push({ name: 'home' });
+        case "2":
+          router.push({ name: "home" });
           break;
-        case '3':
-          router.push({ name: 'unit' });
+        case "3":
+          router.push({ name: "unit" });
           break;
-        case '4':
-          router.push({ name: 'inte' });
-          break;
+        case "4":
+          router.push({ name: "inte" });
+          break;    
       }
     };
 
@@ -215,7 +211,7 @@ export default {
       name: "",
       desc: "",
       url: "",
-      stackUrl:""
+      stackUrl: "",
     });
 
     const openFormDialog = () => {
@@ -240,9 +236,13 @@ export default {
     });
     const isTreeVisible = computed(() => {
       const backendClasses = selectedBackendClasses.value;
-      return backendClasses && backendClasses.length > 0 && backendClasses[0].children.length > 0;
+      return (
+        backendClasses &&
+        backendClasses.length > 0 &&
+        backendClasses[0].children.length > 0
+      );
     });
-    
+
     // 添加类
     const addProjectClass = () => {
       ElMessageBox.prompt("请输入类名称", "添加", {
@@ -256,7 +256,10 @@ export default {
         },
       })
         .then(({ value }) => {
-          data.addBackendClassToProject(parseInt(selectedProject.value)+1, value);
+          data.addBackendClassToProject(
+            parseInt(selectedProject.value) + 1,
+            value
+          );
           ElMessage({
             type: "success",
             message: `添加成功`,
@@ -285,7 +288,7 @@ export default {
       openFormDialog,
       submitFormData,
       Connection,
-      isTreeVisible
+      isTreeVisible,
     };
   },
 };

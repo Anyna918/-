@@ -6,7 +6,10 @@
   </div>
   <div ref="gaugeChartRef" class="chart"></div>
   <div style="margin-bottom: 10px">✅ Accuracy</div>
-  <a-button type="primary" @click="beginTest">开始测试</a-button>
+  <a-button type="primary" @click="beginTest">
+    <p v-if="testType==1">开始测试</p>
+    <p v-else-if="testType==2">统计结果</p>
+  </a-button>
 </template>
 
 <style>
@@ -34,6 +37,8 @@ import { GaugeChart } from "echarts/charts";
 import { TitleComponent, TooltipComponent } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import { triangleTest } from "@/utils/triangle.js";
+import { calendarTest } from "@/utils/calendar.js"
+import { computerTest } from "@/utils/computer.js"
 
 echarts.use([GaugeChart, TitleComponent, TooltipComponent, CanvasRenderer]);
 
@@ -42,7 +47,11 @@ export default {
   components: {
     TestCard,
   },
-  setup() {
+  props: {
+    testType: Number, // 测试类型
+    titleKey: Number // 题目索引
+  },
+  setup(props) {
     const gaugeChartRef = ref(null);
     const results = ref([0, 0, 0]); // 初始化为 0
 
@@ -105,9 +114,19 @@ export default {
     );
 
     const beginTest = () => {
-      // 模拟一个测试结果
-      const testResult = triangleTest();
-      results.value = [testResult.total, testResult.count, testResult.duration];
+      // 判断三角形
+      if (props.titleKey == 0){
+        const testResult = triangleTest();
+        results.value = [testResult.total, testResult.count, testResult.duration];
+      }
+      else if (props.titleKey == 1){
+        const testResult = calendarTest();
+        results.value = [testResult.total, testResult.count, testResult.duration];
+      }
+      else if (props.titleKey == 2){
+        const testResult = computerTest();
+        results.value = [testResult.total, testResult.count, testResult.duration];
+      }
     };
 
     return {

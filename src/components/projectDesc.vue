@@ -1,11 +1,14 @@
 <template>
   <div class="container">
-    <div style="font-size: 24px; margin-top: 20px">
-      {{ projects[projectKey].name }}
+    <div class="button">
+      <a-button type="primary" style="margin-top: 10px; margin-right: 20px;" @click="redirectToUrl">StackBlitz</a-button>
     </div>
-    <div class="description">{{ projects[projectKey].desc }}</div>
+    <div style="font-size: 24px; margin-top: 20px">
+      {{ projectName }}
+    </div>
+    <div class="description">{{ projectDesc }}</div>
     <div class="iframe-container">
-      <iframe :src="projects[projectKey].url" frameborder="0" allowfullscreen></iframe>
+      <iframe :src="projectUrl" frameborder="0" allowfullscreen></iframe>
     </div>
   </div>
 </template>
@@ -28,15 +31,23 @@
 }
 .iframe-container iframe {
   width: 68vw;    
-  height:500px;
+  height:55vh;
   margin-top: 15px;
   border-radius: 10px;      
+}
+.button{
+  width:100%;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>
 
 <script setup>
 const props = defineProps({
-  projectKey: Number,
+  projectName: String,
+  projectDesc: String,
+  projectUrl: String,
+  stackUrl: String
 });
 
 // 项目描述
@@ -102,4 +113,13 @@ const projects = [
         url: "https://www.yonyoucloud.com"
     }
 ];
+
+function redirectToUrl() {
+  if (props.stackUrl) {
+    window.open(props.stackUrl, '_blank');
+  } else {
+    console.error('No URL provided!');
+  }
+}
+
 </script>

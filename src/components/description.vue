@@ -10,7 +10,7 @@
       </div>
       <div class="code">
         <p style="font-weight: bold">代码示例</p>
-        <pre><code class="language-js">{{ code }}</code></pre>
+        <pre><code class="language-js">{{ currentCode }}</code></pre>
       </div>
     </div>
     <div class="area_right">
@@ -99,7 +99,7 @@ pre::-webkit-scrollbar {
 </style>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed, watchEffect, nextTick } from "vue";
 import Prism from "prismjs";
 import "prismjs/themes/prism-duotone-dark.css";
 import { useDataStore } from "@/store/dataStore.js";
@@ -161,14 +161,6 @@ const content = ref([
       {
         value: "edge",
         label: "边界值",
-      },
-      {
-        value: "equal",
-        label: "等价类",
-      },
-      {
-        value: "decision",
-        label: "决策表"
       }
     ],
   },
@@ -198,23 +190,128 @@ const content = ref([
 ]);
 
 // 示例代码
-const code = ref(`function isTriangle(a, b, c) {
-  if (a + b > c && a + c > b && b + c > a) {
-    if (a === b && b === c) {
-      return 'Equilateral triangle'; // 等边三角形
-    } else if (a === b || b === c || a === c) {
-      return 'Isosceles triangle'; // 等腰三角形
+const code_1 = ref(
+  `function isTriangle(a, b, c) {
+    if (!(1<=a && a<=100) || !(1<=b && b<=100) || !(1<=c && c<=100))
+      return "无效输入";
+    if (a + b > c && a + c > b && b + c > a) {
+      if (a === b && b === c) {
+        return "等边三角形"; // 等边三角形
+      } else if (a === b || b === c || a === c) {
+        return "等腰三角形"; // 等腰三角形
+      } else {
+        return "普通三角形"; // 普通三角形
+      }
     } else {
-      return 'Scalene triangle'; // 不等边三角形
+      return "非三角形"; // 不是三角形
     }
-  } else {
-    return 'Not a triangle'; // 不是三角形
+  }`
+);
+
+const code_2 = ref(
+  `function judgeCalendar(year, month, day) {
+    const monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]; // 每个月份的天数
+    let isLeap = 0; // 闰年标识
+
+    if (year % 400 == 0) { // 判断是否为闰年
+      isLeap = 1;
+    } else if (year % 100 != 0 && year % 4 == 0) {
+      isLeap = 1;
+    }
+
+    monthDays[1] += isLeap;
+    const maxDays = monthDays[month - 1];
+    const result = [year, month, day + 1];
+
+    if (year < 1800 || year > 2000) {
+      // 年份越界
+      return "-1";
+    }
+    if (month <= 0 || month > 12) {
+      // 月份越界
+      return "-1";
+    }
+    if (day <= 0 || day > maxDays) {
+      // 天数越界
+      return "-1";
+    }
+
+    // 满足条件后，求解下一天的日期
+    if (day == maxDays) {
+      result[2] = 1;
+      result[1]++;
+    }
+    if (result[1] > 12) {
+      result[1] = 1;
+      result[0]++;
+    }
+
+    return result[0] + "-" + result[1] + "-" + result[2];
+  }`
+);
+
+const code_3 = ref(
+  `function computeAmount(host, display, peripheral){
+    if (host == -1) {
+      return "系统开始统计月度销售额";
+    }
+    if (host <= 0 || display <= 0 || peripheral <= 0) {
+      return "数据非法";
+    }
+    if (host > 70) {
+      return "数据非法";
+    }
+    if (display > 80) {
+      return "数据非法";
+    }
+    if (peripheral > 90) {
+      return "数据非法";
+    }
+
+    // 总金额
+    const totalSales = host * 25 + display * 30 + peripheral * 45;
+    if (totalSales <= 1000) {
+      return String(totalSales * 0.1);
+    } else if (totalSales <= 1800) {
+      return String(totalSales * 0.15);
+    } else {
+      return String(totalSales * 0.2);
+    }
+  }`
+);
+
+// 每次更新后均刷新显示高亮
+const applyHighlight = (code) => {
+  nextTick(() => {
+    Prism.highlightAll();
+  });
+  return code;
+};
+
+// 使用计算属性根据 titleKey 动态返回对应的代码段
+const currentCode = computed(() => {
+  let code;
+  switch (props.titleKey) {
+    case 0:
+      code = code_1.value;
+      break;
+    case 1:
+      code = code_2.value;
+      break;
+    case 2:
+      code = code_3.value;
+      break;
+    default:
+      code = "No code available.";
   }
-}`);
+  return applyHighlight(code);
+});
+
 
 // 选中的测试方法：
 const selectedValue = ref("");
 const dataStore = useDataStore();
+
 // 导入选择好的测试方法
 const inputTestData = () =>{
   // 三角形判断
@@ -227,6 +324,26 @@ const inputTestData = () =>{
         dataStore.fetchCsvFromPublic('triangle_2.csv');
         break;
     };
+  }
+  else if (props.titleKey == 1){
+    switch(selectedValue.value[0]){
+      case 'edge':
+        dataStore.fetchCsvFromPublic('calendar_1.csv');
+        break;
+      case 'equal':
+        dataStore.fetchCsvFromPublic('calendar_2.csv');
+        break;
+      case 'decision':
+      dataStore.fetchCsvFromPublic('calendar_3.csv');
+      break;
+    };
+  }
+  else if (props.titleKey == 2){
+    switch(selectedValue.value[0]){
+      case 'edge':
+        dataStore.fetchCsvFromPublic('computer_1.csv');
+        break;
+    }
   }
 }
 

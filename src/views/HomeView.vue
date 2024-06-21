@@ -72,7 +72,7 @@
         </el-menu>
 
         <Description v-if="activeIndex === '1'" :titleKey="selectedKeys[0]-1"/>
-        <DashBoard v-else-if="activeIndex === '2'"/>
+        <DashBoard v-else-if="activeIndex === '2'" :testType="1" :titleKey="selectedKeys[0]-1"/>
         <DataTable v-else />
       </div>
     </el-col>
@@ -225,6 +225,9 @@ export default {
           break;
         case '3':
           router.push({ name: 'unit' });
+          break;
+        case '4':
+          router.push({ name: 'inte' });
           break;
       }
     };
