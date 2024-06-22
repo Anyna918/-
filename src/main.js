@@ -13,3 +13,4 @@ import { createPinia } from 'pinia';
 const pinia = createPinia();
 // 根组件的挂载在ElementPlus之后
 createApp(App).use(Antd).use(ElementPlus).use(router).use(pinia).mount("#app");
+

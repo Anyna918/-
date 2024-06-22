@@ -146,8 +146,8 @@ export const useDataStore = defineStore("data", {
         const reader = new FileReader();
         reader.onload = (e) => {
           this.parseAndUpdateStatus(e.target.result)
-            .then((result) => resolve(result))
-            .catch((error) => reject(error));
+            .then(result => resolve(result))
+            .catch(error => reject(error));
         };
         reader.onerror = (error) => {
           console.error("Error reading file:", error);
@@ -162,91 +162,82 @@ export const useDataStore = defineStore("data", {
       });
     },
     // 解析上传的结果CSV并更新状态
-    // 解析上传的结果CSV并更新状态
-    parseAndUpdateStatus(csvData) {
-      return new Promise((resolve, reject) => {
-        Papa.parse(csvData, {
-          dynamicTyping: true,
-          skipEmptyLines: true,
-          encoding: "utf8",
-          complete: (results) => {
-            try {
-              const result = this.updateStatus(results.data);
-              resolve(result);
-            } catch (error) {
-              reject(error);
-            }
-          },
-          error: (error) => {
-            reject(error);
-          },
-        });
-      });
-    },
-
-    // 根据上传的结果更新状态
-    updateStatus(data) {
-      var count = 0; // 通过个数
-      const startTime = performance.now(); // 记录开始时间
-
-      const idIndex = this.columns.findIndex((col) => col.title === "id"); // 确认 'id' 在列中的索引
-      const statusIndex = this.columns.findIndex(
-        (col) => col.title === "status"
-      ); // 确认 'status' 在列中的索引
-      const functionIndex = this.columns.findIndex(
-        (col) => col.title === "function"
-      ); // 确认 'Function' 在列中的索引
-
-      if (
-        idIndex !== -1 &&
-        statusIndex !== -1 &&
-        functionIndex !== -1 &&
-        data.length > 0
-      ) {
-        data.forEach((row) => {
-          const id = row[idIndex];
-          const status = row[statusIndex];
-          const functionValue = row[functionIndex];
-
-          const item = this.dataSource.find((item) => item.id === id); // 使用 'id' 属性寻找对应的测试用例
-          if (item) {
-            console.log("item", item, "status", status);
-            if (functionValue == item.function) {
-              if (status == true) {
-                item.status = "pass";
-                count++;
-              } else if (status == false) item.status = "failure";
-            }
-          }
-        });
-
-        const endTime = performance.now(); // 记录结束时间
-        const duration = endTime - startTime; // 计算持续时间，单位为ms
-
-        ElNotification({
-          title: "状态更新成功",
-          message: "所有相关的测试用例状态已更新",
-          type: "success",
-        });
-
-        return {
-          total: this.dataSource.length,
-          count: count,
-          duration: parseFloat(duration.toFixed(3)), // 返回时间为数值类型，单位为ms
-        };
-      } else {
-        ElNotification({
-          title: "错误",
-          message: "CSV格式不正确或缺少必要的列",
-          type: "error",
-        });
-
-        return {
-          total: 0,
-          count: 0,
-          duration: 0,
-        };
+// 解析上传的结果CSV并更新状态
+parseAndUpdateStatus(csvData) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(csvData, {
+      dynamicTyping: true,
+      skipEmptyLines: true,
+      encoding: "utf8",
+      complete: (results) => {
+        try {
+          const result = this.updateStatus(results.data);
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        }
+      },
+      error: (error) => {
+        reject(error);
       }
-    },
+    });
+  });
+},
+
+// 根据上传的结果更新状态
+updateStatus(data) {
+  var count = 0; // 通过个数
+  const startTime = performance.now(); // 记录开始时间
+
+  const idIndex = this.columns.findIndex((col) => col.title === "id"); // 确认 'id' 在列中的索引
+  const statusIndex = this.columns.findIndex((col) => col.title === "status"); // 确认 'status' 在列中的索引
+  const functionIndex = this.columns.findIndex((col) => col.title === "function"); // 确认 'Function' 在列中的索引
+
+  if (idIndex !== -1 && statusIndex !== -1 && functionIndex !== -1 && data.length > 0) {
+    data.forEach((row) => {
+      const id = row[idIndex];
+      const status = row[statusIndex];
+      const functionValue = row[functionIndex];
+
+      const item = this.dataSource.find((item) => item.id === id); // 使用 'id' 属性寻找对应的测试用例
+      if (item) {
+        console.log("item", item, "status", status);
+        if (functionValue == item.function) {
+          if (status == true) {
+            item.status = "pass";
+            count++;
+          } else if (status == false) item.status = "failure";
+        }
+      }
+    });
+
+    const endTime = performance.now(); // 记录结束时间
+    const duration = endTime - startTime; // 计算持续时间，单位为ms
+
+    ElNotification({
+      title: "状态更新成功",
+      message: "所有相关的测试用例状态已更新",
+      type: "success",
+    });
+
+    return {
+      total: this.dataSource.length,
+      count: count,
+      duration: parseFloat(duration.toFixed(3)), // 返回时间为数值类型，单位为ms
+    };
+  } else {
+    ElNotification({
+      title: "错误",
+      message: "CSV格式不正确或缺少必要的列",
+      type: "error",
+    });
+
+    return {
+      total: 0,
+      count: 0,
+      duration: 0
+    };
+  }
+}
   },
 });

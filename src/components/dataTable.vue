@@ -13,7 +13,7 @@
     :data-source="dataStore.dataSource"
     bordered
     class="table"
-    :scroll="{ y: 400 }"
+    :scroll="{ y: 400 , x:1500}"
     :expand-column-width="100"
   >
     <template
